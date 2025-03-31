@@ -5,6 +5,8 @@ class _Node:
         
 class Deque:
     def __init__ (self):
+        self.front_size = 0
+        self.back_size = 0
         self.size = 0
         self.front_head = None
         self.back_head = None
@@ -13,23 +15,30 @@ class Deque:
         newNode = _Node (value) #Create new node
         newNode.next = self.front_head #Make old head next for new node
         self.front_head = newNode #Make old head new node
-        self.size += 1 #Increment size
+        self.front_size += 1 #Increment size
+        self.size += 1
+        self.balance()
 
         #Do same as add front but use back node
     def insertBack(self, value: int):
         newNode = _Node(value)
         newNode.next = self.back_head
         self.back_head = newNode
+        self.back_size += 1
         self.size += 1
+        self.balance()
     
     def removeFront(self) -> int:
+        if self.isEmpty(): #Raise error if deque is empty
+            raise IndexError("Deque is empty")
+        
         if self.front_head is None:
-            if self.back_head is None:
-                raise IndexError("Deque is empty")
-            self.reverse_back_to_front()
+            self.transferBackToFront()
         done = self.front_head.value
         self.front_head = self.front_head.next
+        self.front_size -= 1
         self.size -= 1
+        self.balance()
         return done
     
         #same as front but use back node
@@ -37,10 +46,12 @@ class Deque:
         if self.back_head is None:
             if self.front_head is None:
                 raise IndexError("Deque is empty")
-            self.reverse_front_to_back()
+            self.transferFrontToBack()
         done = self.back_head.value
         self.back_head = self.back_head.next
+        self.back_size -= 1
         self.size -= 1
+        self.balance()
         return done
 
     def isEmpty(self) -> bool: #Check if deque is empty
@@ -49,19 +60,59 @@ class Deque:
     def getSize(self) -> int:
         return self.size
     
-    def reverseBackToFront(self): #Helper method to reverse list in case of one list empty.
-        while self.back_head:
-            node = self.back_head
-            self.back_head = self.back_head.next
-            node.next = self.front_head
-            self.front_head = node
+    def balance(self): #Balance the deque
+        if self.front_size > 2 * self.back_size:
+            self.transferFrontToBack()
+        elif self.back_size > 2 * self.front_size:
+            self.transferBackToFront()
 
-    def reverse_front_to_back(self): #Helper method to reverse list in case of one list empty.
-        while self.front_head:
-            node = self.front_head
-            self.front_head = self.front_head.next
-            node.next = self.back_head
-            self.back_head = node
+    def transferBackToFront(self):
+        if self.back_head is None:
+            return
+            
+        #Create a variable to store the number of elements to transfer
+        elementsToTransfer = self.back_size // 2
+        if elementsToTransfer == 0:
+            return
+            
+        #Find the last node to transfer
+        current = self.back_head
+        for _ in range(elementsToTransfer - 1):
+            current = current.next
+            
+        #Transfer nodes
+        newBackHead = current.next
+        current.next = self.front_head
+        self.front_head = self.back_head
+        self.back_head = newBackHead
+        
+        #Update sizes
+        self.front_size += elementsToTransfer
+        self.back_size -= elementsToTransfer
+
+    def transferFrontToBack(self):
+        if self.front_head is None:
+            return
+            
+        #Create a variable to store the number of elements to transfer
+        elementsToTransfer = self.front_size // 2
+        if elementsToTransfer == 0:
+            return
+            
+        #Find the last node to transfer
+        current = self.front_head
+        for _ in range(elementsToTransfer - 1):
+            current = current.next
+            
+        #Transfer nodes
+        newFrontHead = current.next
+        current.next = self.back_head
+        self.back_head = self.front_head
+        self.front_head = newFrontHead
+        
+        #Update sizes
+        self.back_size += elementsToTransfer
+        self.front_size -= elementsToTransfer
             
 def main():
     dq = Deque()
